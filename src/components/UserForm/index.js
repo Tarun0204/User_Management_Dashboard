@@ -74,9 +74,9 @@ class UserForm extends Component {
                     usersList: [...usersList, data],
                     formData: { id: null, firstName: "", lastName: "", email: "", department: "" },
                 });
-                toast.success("User added successfully!");
+                toast.success("User Added Successfully!");
             } catch (error) {
-                toast.error("Error adding user!");
+                toast.error("Error Adding User!");
             }
         } else {
             toast.error("Please fill all required fields!");
@@ -87,7 +87,7 @@ class UserForm extends Component {
         this.setState((prevState) => ({
             usersList: prevState.usersList.filter((user) => user.id !== id),
         }), () => {
-            toast.success("User deleted successfully!");
+            toast.success("User Deleted Successfully!");
         });
     };
 
