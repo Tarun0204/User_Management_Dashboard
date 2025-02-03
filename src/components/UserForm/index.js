@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import usersManagement from "../../assets/usersManagement.jpg";
 import UserList from "../UserList";
@@ -15,8 +16,31 @@ class UserForm extends Component {
             email: "",
             department: "",
         },
-        formUsersList: [],
-        fetchedUsersData: [],
+        usersList: [],
+    };
+
+    componentDidMount() {
+        this.fetchUsers();
+    }
+
+    fetchUsers = async () => {
+        try {
+            const response = await fetch("https://jsonplaceholder.typicode.com/users");
+            if (!response.ok) {
+                throw new Error("Failed to fetch data");
+            }
+            const data = await response.json();
+            const updatedData = data.map((eachUser) => ({
+                id: eachUser.id,
+                firstName: eachUser.name.split(" ")[0],
+                lastName: eachUser.name.split(" ")[1] || "",
+                email: eachUser.email,
+                department: eachUser.company.name,
+            }));
+            this.setState({ usersList: updatedData });
+        } catch (error) {
+            console.error(error);
+        }
     };
 
     handleInputChange = (event) => {
@@ -27,7 +51,7 @@ class UserForm extends Component {
     };
 
     handleAddUser = async () => {
-        const { formData, formUsersList } = this.state;
+        const { formData, usersList } = this.state;
         if (formData.firstName && formData.email && formData.department) {
             const newUser = {
                 id: uuidv4(),
@@ -47,78 +71,37 @@ class UserForm extends Component {
                 }
                 const data = await response.json();
                 this.setState({
-                    formUsersList: [...formUsersList, data],
+                    usersList: [...usersList, data],
                     formData: { id: null, firstName: "", lastName: "", email: "", department: "" },
                 });
-                toast.success("User added successfully!", {
-                    position: "top-right",
-                    autoClose: 3000,
-                    hideProgressBar: false,
-                    closeOnClick: true,
-                    pauseOnHover: true,
-                    draggable: true,
-                    theme: "light",
-                });
+                toast.success("User added successfully!");
             } catch (error) {
-                toast.error("Error adding user!", {
-                    position: "top-right",
-                    autoClose: 3000,
-                    hideProgressBar: false,
-                    closeOnClick: true,
-                    pauseOnHover: true,
-                    draggable: true,
-                    theme: "light",
-                });
+                toast.error("Error adding user!");
             }
         } else {
-            toast.error("Please fill all required fields!", {
-                position: "top-right",
-                autoClose: 3000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                theme: "light",
-            });
+            toast.error("Please fill all required fields!");
         }
     };
 
-    handleDeleteUser = async (id) => {
-        try {
-            const response = await fetch(`https://jsonplaceholder.typicode.com/users/${id}`, {
-                method: "DELETE",
-            });
-            if (!response.ok) {
-                throw new Error("Failed to delete user");
-            }
-            this.setState((prevState) => ({
-                formUsersList: prevState.formUsersList.filter((user) => user.id !== id),
-                fetchedUsersData: prevState.fetchedUsersData.filter((user) => user.id !== id),
-            }));
-            toast.success("User deleted successfully!", {
-                position: "top-right",
-                autoClose: 3000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                theme: "light",
-            });
-        } catch (error) {
-            toast.error("Error deleting user!", {
-                position: "top-right",
-                autoClose: 3000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                theme: "light",
-            });
-        }
+    handleDeleteUser = (id) => {
+        this.setState((prevState) => ({
+            usersList: prevState.usersList.filter((user) => user.id !== id),
+        }), () => {
+            toast.success("User deleted successfully!");
+        });
+    };
+
+
+    handleUpdateUser = (updatedUser) => {
+        this.setState((prevState) => ({
+            usersList: prevState.usersList.map((user) =>
+                user.id === updatedUser.id ? updatedUser : user
+            ),
+        }));
     };
 
     render() {
-        const { formData, formUsersList, fetchedUsersData } = this.state;
+        const { formData, usersList } = this.state;
         return (
             <>
                 <div className="user-form-section">
@@ -136,42 +119,38 @@ class UserForm extends Component {
                                     type="text"
                                     id="firstName"
                                     className="input-field"
-                                    placeholder="Enter your First Name"
                                     value={formData.firstName}
                                     onChange={this.handleInputChange}
+                                    placeholder="Enter your First Name"
                                 />
                                 <label htmlFor="lastName" className="input-field-label">Last Name</label>
                                 <input
                                     type="text"
                                     id="lastName"
                                     className="input-field"
-                                    placeholder="Enter your Last Name"
                                     value={formData.lastName}
                                     onChange={this.handleInputChange}
+                                    placeholder="Enter your Last Name"
                                 />
                                 <label htmlFor="email" className="input-field-label">Email</label>
                                 <input
                                     type="email"
                                     id="email"
                                     className="input-field"
-                                    placeholder="Enter your Email"
                                     value={formData.email}
                                     onChange={this.handleInputChange}
+                                    placeholder="Enter your Email"
                                 />
                                 <label htmlFor="department" className="input-field-label">Department</label>
                                 <input
                                     type="text"
                                     id="department"
                                     className="input-field"
-                                    placeholder="Enter your Department"
                                     value={formData.department}
                                     onChange={this.handleInputChange}
+                                    placeholder="Enter your Department"
                                 />
-                                <button
-                                    type="button"
-                                    className="add-user-btn"
-                                    onClick={this.handleAddUser}
-                                >
+                                <button type="button" className="add-user-btn" onClick={this.handleAddUser}>
                                     Add User
                                 </button>
                             </form>
@@ -179,9 +158,11 @@ class UserForm extends Component {
                     </div>
                 </div>
                 <UserList
-                    usersData={[...formUsersList, ...fetchedUsersData]}
+                    usersData={usersList}
                     handleDeleteUser={this.handleDeleteUser}
+                    handleUpdateUser={this.handleUpdateUser}
                 />
+                <ToastContainer position="top-right" autoClose={3000} />
             </>
         );
     }
